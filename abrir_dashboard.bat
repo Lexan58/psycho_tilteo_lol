@@ -1,4 +1,11 @@
 @echo off
-cd /d "d:\Python\tilteo lol"
-"C:\Users\Jeisson\AppData\Local\Programs\Python\Python313\python.exe" -m streamlit run dashboard.py
+title Tilteo Coach
+
+cd /d "D:\Python\psycho_tilteo_lol"
+
+echo Iniciando dashboard mental...
+echo.
+
+venv\Scripts\python.exe -m streamlit run dashboard.py
+
 pause

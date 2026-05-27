@@ -1,6 +1,7 @@
 import sqlite3
 from datetime import datetime
-from player_profile import PLAYER_PROFILE
+from core.player_profile import PLAYER_PROFILE
+from core.config import MENTAL_THRESHOLDS
 
 def hour_risk_factor(hour):
     if hour >= 0 and hour <= 6:

@@ -281,3 +281,23 @@ def adaptive_thresholds_from_history(states):
         "high": round(high, 2),
         "note": "Umbrales adaptados al comportamiento del jugador"
     }
+
+def champion_emotional_profile(data):
+
+    if not data:
+        return None
+
+    sorted_data = sorted(data, key=lambda x: x[1], reverse=True)
+
+    worst = sorted_data[0]
+    best = sorted_data[-1]
+
+    return {
+        "worst_champion": worst[0],
+        "worst_score": round(worst[1], 2),
+
+        "best_champion": best[0],
+        "best_score": round(best[1], 2),
+
+        "details": sorted_data
+    }

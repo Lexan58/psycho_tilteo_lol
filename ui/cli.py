@@ -1,4 +1,4 @@
-from database import connect_db
+from core.database import connect_db
 
 def add_match():
     champion = input("Campeón: ")

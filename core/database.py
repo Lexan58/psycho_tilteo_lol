@@ -1,7 +1,13 @@
 import sqlite3
+import os
+from core.config import DB_PATH
 
+DB_PATH = os.path.join("data", "tilteo.db")
+DB_PATH = "data/tilteo.db"
+
+print("USANDO DB:", os.path.abspath(DB_PATH))
 def connect_db():
-    return sqlite3.connect("data/tilteo.db")
+    return sqlite3.connect(DB_PATH)
 
 def create_table():
     conn = connect_db()
@@ -35,10 +41,12 @@ def get_last_champion_played():
     """)
 
     result = cursor.fetchone()
+
     conn.close()
 
     if result:
         return result[0]
+
     return None
 
 def create_mental_log_table():
@@ -115,3 +123,22 @@ def get_recent_mental_states(limit=5):
     rows = cursor.fetchall()
     conn.close()
     return rows
+
+def get_champion_mental_stats():
+    import sqlite3
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT champion, AVG(tilt_level), COUNT(*)
+        FROM matches
+        GROUP BY champion
+        HAVING COUNT(*) >= 2
+    """)
+
+    data = cursor.fetchall()
+
+    conn.close()
+
+    return data

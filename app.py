@@ -1,31 +1,31 @@
-from database import create_table, create_mental_log_table, show_mental_log
-from cli import add_match
-from analytics import (
+from core.database import create_table, create_mental_log_table, show_mental_log
+from ui.cli import add_match
+from core.analytics import (
     tilt_by_result,
     tilt_by_hour,
     winrate_vs_tilt,
     tilt_by_champion,
     tilt_heatmap_by_hour
 )
-from database import get_recent_mental_states
-from analytics import detect_mental_decline
+from core.database import get_recent_mental_states
+from core.analytics import detect_mental_decline
 
-from database import get_mental_timeline
-from analytics import plot_mental_timeline
+from core.database import get_mental_timeline
+from core.analytics import plot_mental_timeline
 
-from rules import check_anti_tilt_rules
-from tilt_rules import ranked_access_decision
+from core.rules import check_anti_tilt_rules
+from core.tilt_rules import ranked_access_decision
 
-from tilt_rules import (
+from core.tilt_rules import (
     get_recent_tilt_data,
     evaluate_mental_state
 )
 
-from database import save_mental_state
+from core.database import save_mental_state
 from datetime import datetime
-from database import get_last_champion_played
-from analytics import build_psychological_profile
-from analytics import personalized_advice_from_profile
+from core.database import get_last_champion_played
+from core.analytics import build_psychological_profile
+from core.analytics import personalized_advice_from_profile
 
 
 def main():
@@ -77,8 +77,8 @@ def main():
                 matches_recent = 5
 
                 # 1. Obtener datos para umbrales
-                from database import get_recent_mental_states # Mover arriba si es posible
-                from analytics import adaptive_thresholds_from_history, detect_mental_decline
+                from core.database import get_recent_mental_states # Mover arriba si es posible
+                from core.analytics import adaptive_thresholds_from_history, detect_mental_decline
                 # Asegúrate de importar mental_state_from_score si existe
                 
                 recent_states = get_recent_mental_states(limit=10)
@@ -97,7 +97,7 @@ def main():
 
                 # --- Visualización ---
                 if last_champion:
-                    from player_profile import PLAYER_PROFILE
+                    from core.player_profile import PLAYER_PROFILE
                     print(f"🎮 Campeón reciente: {last_champion}")
                     if last_champion in PLAYER_PROFILE["stress_champions"]:
                         print("⚠️ Campeón de alta carga emocional detectado.")
@@ -139,7 +139,7 @@ def main():
             plot_mental_timeline(data)
 
         elif choice == "11":
-            from database import get_recent_mental_states
+            from core.database import get_recent_mental_states
             states = get_recent_mental_states(limit=10)
 
             profile = build_psychological_profile(states)
