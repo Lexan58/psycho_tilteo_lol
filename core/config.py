@@ -53,5 +53,5 @@ DASHBOARD_TITLE = "🧠 Psycho Tilt LoL"
 # RIOT API
 # =========================
 
-RIOT_API_KEY = ""
-REGION = "la2"
+RIOT_API_KEY = "RGAPI-7a0ebdba-c134-45c5-8f6b-caf16b1c9f2e"
+REGION = "la1"

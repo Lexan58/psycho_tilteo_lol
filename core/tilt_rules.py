@@ -27,37 +27,6 @@ def tolerance_modifier(tolerance):
         return "medium"
     return "low"""
 
-
-# Paso 3 (datos)
-def get_recent_tilt_data(last_n=5):
-    conn = sqlite3.connect("data/tilteo.db")
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT tilt_level, result
-        FROM matches
-        ORDER BY id DESC
-        LIMIT ?
-    """, (last_n,))
-
-    rows = cursor.fetchall()
-    conn.close()
-
-    if not rows:
-        return None, None
-
-    avg_tilt = sum(r[0] for r in rows) / len(rows)
-
-    losses = 0
-    for r in rows:
-        if r[1].upper() == "L":
-            losses += 1
-        else:
-            break
-
-    return avg_tilt, losses
-
-
 # Paso 2
 def anti_tilt_advice(tilt_state):
     if tilt_state == "high":
