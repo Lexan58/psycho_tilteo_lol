@@ -6,6 +6,3 @@ __pycache__/
 .vscode/
 data/*.db
 *.pyc
-
-RIOT_API_KEY = "RGAPI-20e97cf2-94e9-4df4-bd14-10028780ea3d"
-REGION = "la1"
