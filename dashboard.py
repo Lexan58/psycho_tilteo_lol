@@ -17,13 +17,18 @@ from core.database import (
     update_match_tilt
 )
 from core.sync_service import sincronizar_historial_usuario
+
 from core.analytics import (
     champion_emotional_profile,
     build_psychological_profile,
     personalized_advice_from_profile,
     adaptive_thresholds_from_history,
-    detect_mental_decline
+    detect_mental_decline,
+    calculate_resilience_index,
+    analyze_competitive_fatigue,
+    calculate_champion_emotional_matrix  # <-- AGREGA ESTA LÍNEA
 )
+
 from core.tilt_rules import evaluate_mental_state, ranked_access_decision
 
 # Inicializar Base de Datos al arrancar la UI
@@ -50,13 +55,12 @@ avg_tilt, losses = get_recent_tilt_data(5)
 timeline = get_mental_timeline()
 
 # DEFINICIÓN DE PESTAÑAS (FASE 4)
-tab_mental, tab_champions, tab_sync, tab_history = st.tabs([
+tab_mental, tab_profile_champs, tab_sync, tab_history = st.tabs([
     "🧠 Estado Mental", 
-    "🎮 Análisis de Campeones", 
+    "📊 Perfil y Campeones", 
     "🔄 Sincronizar Riot API", 
     "📈 Historial y Calificación"
 ])
-
 # ==========================================
 # PESTAÑA 1: ESTADO MENTAL
 # ==========================================
@@ -167,10 +171,119 @@ with tab_mental:
         st.info("No hay suficiente historial en el log mental. Evalúa tu estado un par de veces.")
 
 # ==========================================
-# PESTAÑA 2: ANALISIS DE CAMPEONES
+# PESTAÑA 2: PERFIL PSICOLÓGICO Y CAMPEONES (FASE 6)
 # ==========================================
-with tab_champions:
-    st.header("🎮 Perfil Emocional por Campeón")
+with tab_profile_champs:
+    st.header("🧬 Perfil Psicológico Dinámico")
+    st.write("Análisis avanzado automatizado de tus sesgos cognitivos, fatiga y capacidad de recuperación.")
+
+    # ---------------------------------------------------------
+    # SECCIÓN A: ÍNDICE DE RESILIENCIA (TILT-BACK)
+    # ---------------------------------------------------------
+    st.subheader("🛡️ Índice de Resiliencia Post-Derrota")
+    resilience = calculate_resilience_index()
+
+    if resilience["status"] == "success":
+        col_res1, col_res2, col_res3 = st.columns(3)
+        with col_res1:
+            st.metric("Tilt Promedio General", f"{resilience['global_avg']:.2f}")
+        with col_res2:
+            st.metric("Tilt Post-Derrota (Tilt-Back)", f"{resilience['post_loss_avg']:.2f}", 
+                      delta=f"+{resilience['diff']}" if resilience['diff'] > 0 else f"{resilience['diff']}",
+                      delta_color="inverse" if resilience['diff'] > 0 else "normal")
+        with col_res3:
+            st.metric("Veredicto Psicológico", resilience["verdict"])
+            
+        if "Baja Resiliencia" in resilience["verdict"]:
+            st.error(resilience["description"])
+        elif "Reactivo" in resilience["verdict"]:
+            st.warning(resilience["description"])
+        else:
+            st.success(resilience["description"])
+    else:
+        st.info(resilience["message"])
+
+    st.markdown("---")
+
+    # ---------------------------------------------------------
+    # SECCIÓN B: ANÁLISIS DE FATIGA COMPETITIVA
+    # ---------------------------------------------------------
+    st.subheader("📉 Curva de Fatiga Competitiva")
+    st.write("Monitorea cómo se desgasta tu estabilidad emocional según el número de partidas consecutivas jugadas en el mismo día.")
+    
+    fatigue_data = analyze_competitive_fatigue()
+    if fatigue_data is not None and not fatigue_data.empty:
+        plt.style.use('dark_background')
+        fig_fatigue, ax_fatigue = plt.subplots(figsize=(10, 3.5))
+        
+        # Graficar la curva de fatiga (X = Número de partida, Y = Tilt promedio)
+        ax_fatigue.plot(fatigue_data.index, fatigue_data.values, marker="s", color="#ff4757", linewidth=2.5)
+        
+        fig_fatigue.patch.set_facecolor('#0e1117') 
+        ax_fatigue.set_facecolor('#161b22')
+        
+        ax_fatigue.set_ylabel("Tilt Promedio", color="white")
+        ax_fatigue.set_xlabel("Número de Partida del Día", color="white")
+        ax_fatigue.set_xticks(fatigue_data.index)
+        ax_fatigue.tick_params(colors="white") 
+        ax_fatigue.grid(True, linestyle="--", alpha=0.3, color="gray")
+        
+        st.pyplot(fig_fatigue)
+        plt.close(fig_fatigue)
+        plt.style.use('default')
+        
+        # Alerta inteligente basada en datos de fatiga
+        partidas_criticas = fatigue_data[fatigue_data.values >= 6.0].index.tolist()
+        if partidas_criticas:
+            st.error(f"⚠️ **Umbral de Fatiga Detectado:** A partir de la partida número **{partidas_criticas[0]}** de una misma sesión, tu nivel de tilt cruza la zona de peligro. Evita jugar jornadas tan largas.")
+    else:
+        st.info("Sincroniza y califica más partidas para trazar tu curva de fatiga diaria.")
+
+    st.markdown("---")
+
+    # ---------------------------------------------------------
+    # SECCIÓN C: MATRIZ DE DEPENDENCIA EMOCIONAL
+    # ---------------------------------------------------------
+    st.subheader("🧩 Matriz de Rendimiento Psicológico por Campeón")
+    st.write("Clasificación dinámica basada en el cruce de tu Winrate real vs el nivel de estrés experimentado.")
+
+    matrix = calculate_champion_emotional_matrix()
+
+    if matrix["status"] == "success":
+        col_mat1, col_mat2, col_mat3 = st.columns(3)
+
+        with col_mat1:
+            st.success("🛡️ Zona de Confort Total\n(Alto Winrate + Bajo Tilt)")
+            if matrix["comfort_zone"]:
+                for c in matrix["comfort_zone"]:
+                    st.markdown(f"**• {c['name']}** ({c['total']} prt)  \n  └ Winrate: {c['winrate']}% | Tilt: {c['tilt']}/10")
+            else:
+                st.caption("No hay campeones en esta zona aún.")
+
+        with col_mat2:
+            st.warning("⚠️ Campeones Trampa\n(Alto Winrate + Alto Tilt)")
+            if matrix["trap_champions"]:
+                for c in matrix["trap_champions"]:
+                    st.markdown(f"**• {c['name']}** ({c['total']} prt)  \n  └ Winrate: {c['winrate']}% | Tilt: {c['tilt']}/10")
+                st.caption("👉 *Nota: Ganas con ellos, pero te destruyen el mental muy rápido.*")
+            else:
+                st.caption("¡Felicidades! No tienes campeones trampa registrados.")
+
+        with col_mat3:
+            st.error("🚨 Zona de Peligro / Bait\n(Bajo Winrate + Alto Tilt)")
+            if matrix["danger_zone"]:
+                for c in matrix["danger_zone"]:
+                    st.markdown(f"**• {c['name']}** ({c['total']} prt)  \n  └ Winrate: {c['winrate']}% | Tilt: {c['tilt']}/10")
+                st.caption("❌ *Evita pickear estos campeones en rachas negativas.*")
+            else:
+                st.caption("Ningún campeón en zona de peligro extrema.")
+    else:
+        st.info(matrix["message"])
+
+    # ---------------------------------------------------------
+    # SECCIÓN C: TU ANÁLISIS DE CAMPEONES ORIGINAL
+    # ---------------------------------------------------------
+    st.subheader("🎮 Perfil Emocional por Campeón")
     
     champion_data = get_champion_mental_stats()
     if champion_data:
@@ -191,7 +304,6 @@ with tab_champions:
             st.pyplot(fig)
     else:
         st.info("Para ver estadísticas por campeón, necesitas calificar tus partidas en la pestaña de Historial.")
-
 # ==========================================
 # PESTAÑA 3: SINCRONIZAR RIOT API
 # ==========================================

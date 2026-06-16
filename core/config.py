@@ -1,4 +1,6 @@
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # =========================
 # DATABASE
@@ -53,5 +55,9 @@ DASHBOARD_TITLE = "🧠 Psycho Tilt LoL"
 # RIOT API
 # =========================
 
-RIOT_API_KEY = "RGAPI-7a0ebdba-c134-45c5-8f6b-caf16b1c9f2e"
-REGION = "la1"
+RIOT_API_KEY = os.getenv("RIOT_API_KEY")
+REGION = os.getenv("REGION", "la1")
+
+# Validación defensiva (Buena práctica de ciberseguridad)
+if not RIOT_API_KEY:
+    print("⚠️ ADVERTENCIA: La variable RIOT_API_KEY no está configurada en el archivo .env")

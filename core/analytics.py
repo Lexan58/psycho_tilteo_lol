@@ -185,3 +185,132 @@ def detect_mental_decline(states):
         return False
     scores = [s[0] for s in states[:3]]
     return scores[0] > scores[1] > scores[2]
+
+def calculate_resilience_index():
+    """
+    FASE 6: Analiza el efecto arrastre (Tilt-Back).
+    Compara el tilt promedio general contra el tilt experimentado 
+    inmediatamente después de una derrota ('Loss').
+    """
+    df = get_matches_dataframe()
+    if df.empty or len(df) < 5:
+        return {"status": "insufficient_data", "message": "Necesitas al menos 5 partidas registradas."}
+    
+    # Invertimos el orden del DataFrame para analizar cronológicamente (del pasado al presente)
+    df_cronologico = df.iloc[::-1].copy()
+    
+    # Creamos una columna nueva que nos dice cuál fue el resultado de la partida ANTERIOR
+    df_cronologico["previous_result"] = df_cronologico["result"].shift(1)
+    
+    # Calculamos tu promedio general de tilt
+    global_avg_tilt = df_cronologico["tilt_level"].mean()
+    
+    # Filtramos solo las partidas donde venías de perder la partida anterior
+    post_loss_matches = df_cronologico[df_cronologico["previous_result"] == "Loss"]
+    
+    if post_loss_matches.empty:
+        return {
+            "status": "stable",
+            "global_avg": round(global_avg_tilt, 2),
+            "post_loss_avg": round(global_avg_tilt, 2),
+            "diff": 0.0,
+            "verdict": "Resiliencia Óptima",
+            "description": "No juegas bajo el efecto del 'Insta-queue' o venganza tras perder."
+        }
+    
+    post_loss_avg_tilt = post_loss_matches["tilt_level"].mean()
+    diff = post_loss_avg_tilt - global_avg_tilt
+    
+    # Clasificación psicológica según la diferencia
+    if diff > 1.5:
+        verdict = "Vulnerable al Arrastre (Baja Resiliencia)"
+        desc = "Tu frustración aumenta drásticamente en la partida posterior a una derrota. Es vital que pares de jugar al perder."
+    elif diff > 0.5:
+        verdict = "Reactivo Moderado"
+        desc = "Sientes una ligera presión extra al venir de una derrota, mantén la calma."
+    else:
+        verdict = "Mente de Hierro (Alta Resiliencia)"
+        desc = "Controlas perfectamente el impacto de las derrotas. Tu mente se reinicia para el siguiente mapa."
+        
+    return {
+        "status": "success",
+        "global_avg": round(global_avg_tilt, 2),
+        "post_loss_avg": round(post_loss_avg_tilt, 2),
+        "diff": round(diff, 2),
+        "verdict": verdict,
+        "description": desc
+    }
+
+def analyze_competitive_fatigue():
+    """
+    FASE 6: Mide cuántas partidas puedes jugar en un mismo día 
+    antes de que tu nivel de tilt se dispare.
+    """
+    df = get_matches_dataframe()
+    if df.empty:
+        return None
+        
+    df_cronologico = df.iloc[::-1].copy()
+    df_cronologico["date"] = pd.to_datetime(df_cronologico["date"])
+    df_cronologico["day"] = df_cronologico["date"].dt.date
+    
+    # Contamos qué número de partida del día es cada fila
+    df_cronologico["match_number_of_day"] = df_cronologico.groupby("day").cumcount() + 1
+    
+    # Agrupamos por el número de partida del día para ver el tilt promedio
+    fatigue_stats = df_cronologico.groupby("match_number_of_day")["tilt_level"].mean()
+    
+    return fatigue_stats
+
+def calculate_champion_emotional_matrix():
+    """
+    FASE 6: Cruza el Winrate Real de cada campeón contra su Tilt Promedio 
+    para clasificar tus elecciones en zonas psicológicas de rendimiento.
+    """
+    df = get_matches_dataframe()
+    if df.empty or len(df) < 5:
+        return {"status": "insufficient_data", "message": "Faltan datos para la matriz emocional."}
+
+    # 1. Convertir el resultado a binario para promediar el Winrate (1 si ganas, 0 si pierdes)
+    df["win_binary"] = df["result"].apply(lambda x: 1 if x == "Win" else 0)
+
+    # 2. Agrupar por campeón y calcular el conteo de partidas, el winrate y el tilt promedio
+    champ_stats = df.groupby("champion").agg(
+        total_matches=("id", "count"),
+        winrate=("win_binary", "mean"),
+        avg_tilt=("tilt_level", "mean")
+    ).reset_index()
+
+    # Convertir el winrate a formato porcentual (0.60 -> 60%)
+    champ_stats["winrate"] = champ_stats["winrate"] * 100
+
+    comfort_zone = []
+    trap_champions = []
+    danger_zone = []
+
+    # 3. Clasificación usando los umbrales de la IA
+    for _, row in champ_stats.iterrows():
+        name = row["champion"]
+        wr = row["winrate"]
+        tilt = row["avg_tilt"]
+        total = row["total_matches"]
+
+        champ_info = {"name": name, "winrate": round(wr, 1), "tilt": round(tilt, 1), "total": total}
+
+        # Lógica de clasificación de la matriz
+        if wr >= 50.0 and tilt < 5.0:
+            comfort_zone.append(champ_info)
+        elif wr >= 50.0 and tilt >= 5.0:
+            trap_champions.append(champ_info)
+        elif wr < 50.0 and tilt >= 5.0:
+            danger_zone.append(champ_info)
+        else:
+            # Caso neutro o de bajo winrate pero bajo tilt
+            comfort_zone.append(champ_info)
+
+    return {
+        "status": "success",
+        "comfort_zone": comfort_zone,
+        "trap_champions": trap_champions,
+        "danger_zone": danger_zone
+    }

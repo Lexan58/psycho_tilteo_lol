@@ -7,5 +7,5 @@ __pycache__/
 data/*.db
 *.pyc
 
-RIOT_API_KEY = "RGAPI-7a0ebdba-c134-45c5-8f6b-caf16b1c9f2e"
+RIOT_API_KEY = "RGAPI-20e97cf2-94e9-4df4-bd14-10028780ea3d"
 REGION = "la1"
