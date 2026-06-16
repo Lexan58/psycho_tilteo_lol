@@ -20,13 +20,9 @@ from core.sync_service import sincronizar_historial_usuario
 
 from core.analytics import (
     champion_emotional_profile,
-    build_psychological_profile,
-    personalized_advice_from_profile,
-    adaptive_thresholds_from_history,
-    detect_mental_decline,
     calculate_resilience_index,
     analyze_competitive_fatigue,
-    calculate_champion_emotional_matrix  # <-- AGREGA ESTA LÍNEA
+    calculate_champion_emotional_matrix  
 )
 
 from core.tilt_rules import evaluate_mental_state, ranked_access_decision
